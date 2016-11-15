@@ -33,7 +33,23 @@ export default class Contact extends React.Component {
         this.handleRemove = this.handleRemove.bind(this);
         this.handleEdit = this.handleEdit.bind(this);
     }
-    
+
+	componentWillMount() {
+		const contactData = localStorage.contactData;
+
+		if(contactData) {
+			this.setState({
+				contactData: JSON.parse(contactData)
+			})
+		}
+	}
+	
+	componentDidUpdate(prevProps, prevState) {
+		if(JSON.stringify(prevState.contactData) != JSON.stringify(this.state.contactData)) {
+			localStorage.contactData = JSON.stringify(this.state.contactData)
+		}
+	}
+
     handleChange(e) {
     	this.setState({
     		keyword: e.target.value
@@ -53,22 +69,25 @@ export default class Contact extends React.Component {
     	});
     }
     handleRemove() {
+		if (this.state.selectedKey < 0) {
+			return;
+		}
     	this.setState({
     		contactData: update(this.state.contactData, {$splice: [[this.state.selectedKey, 1]]}),
     		selectedKey: -1
     	});
     }
     handleEdit(name, phone) {
-    	this.setState({
-    		contactData: update(this.state.contactData,
-    			{
-	    			[this.state.selectedKey]: {	    			
-	    				name: {$set: name},
-	    				phone: {$set: phone}
-	    			}
-    			}
-    		)
-    	});
+        this.setState({
+            contactData: update(this.state.contactData,
+                {
+                    [this.state.selectedKey]: {
+                        name: { $set: name },
+                        phone: { $set: phone }
+                    }
+                }
+            )
+        });
     }
     render() {
         const mapToComponents = (data) => {
@@ -99,7 +118,10 @@ export default class Contact extends React.Component {
                 <div>{mapToComponents(this.state.contactData)}</div>
                 <ContactDetails 
                 	isSelected={this.state.selectedKey != -1}
-                	contact={this.state.contactData[this.state.selectedKey]}/>
+                	contact={this.state.contactData[this.state.selectedKey]}
+                	onRemove={this.handleRemove}
+					onEdit={this.handleEdit}
+                />
                 <ContactCreate
                 	onCreate={this.handleCreate}
                 />
